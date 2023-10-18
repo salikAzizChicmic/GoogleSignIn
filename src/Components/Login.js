@@ -1,46 +1,63 @@
 import React,{useEffect, useState} from 'react'
-import { Image, Text, TouchableOpacity, View } from 'react-native'
+import { ActivityIndicator, Image, Text, TouchableOpacity, View } from 'react-native'
 import { GoogleSignin, statusCodes} from '@react-native-google-signin/google-signin';
+import auth from '@react-native-firebase/auth';
 
+GoogleSignin.configure({
 
+    webClientId:
+    
+    "727395920058-tj3ad0obgumhhbsm2co1e6s5d7akm5a2.apps.googleusercontent.com",
+    
+    }); 
 const Login = () => {
-    const webClientId = "727395920058-tj3ad0obgumhhbsm2co1e6s5d7akm5a2.apps.googleusercontent.com"; 
-
     const [userData,setUserData]=useState(null)
-    useEffect(()=>{
-        GoogleSignin.configure({
-            webClientId: webClientId,
-        })
-    },[])
+    const [loading,setLoading]=useState(false)
 
     const googleLogin = async () => {
-        try {
-            await GoogleSignin.hasPlayServices();
-            const userInfo = await GoogleSignin.signIn();
-            console.log("userinfo", userInfo);
-            setUserData(userInfo.user)
+        const { idToken } = await GoogleSignin.signIn();
 
-        } catch (error) {
-            console.log(error)
-        }
+        const googleCredential = auth.GoogleAuthProvider.credential(idToken);
+        
+        return auth().signInWithCredential(googleCredential);
       };
 
+      const handleLogin=()=>{
+        setLoading(true)
+        googleLogin().then((res)=>{
+            setUserData(res.user)
+            setLoading(false)
+        }).catch(error=>{
+            console.log(error)
+            setLoading(false)
+        })
+      }
+      
+
       const handleLogout=()=>{
-         aut   
-        setUserData(null)
+        setLoading(true)
+        auth().signOut().then(()=>{
+            setUserData(null)
+            setLoading(false)
+        }).catch(error=>{
+            console.log(error)
+            setLoading(false)
+        })
       }
 
-      
+      useEffect(()=>{
+        setUserData(auth().currentUser)
+      })
   return (
     <View>
 
         {userData && <View style={{justifyContent:'center',alignItems:'center',marginTop:110,marginBottom:30}}>
-            <Image style={{height:130,width:130,objectFit:'fill',borderRadius:50}} source={{uri:userData.photo}} />
-            <Text style={{fontSize:20,fontWeight:'bold',marginTop:10}}>{userData.givenName} {userData.familyName}</Text>
+            <Image style={{height:130,width:130,objectFit:'fill',borderRadius:50}} source={{uri:userData.photoURL}} />
+            <Text style={{fontSize:20,fontWeight:'bold',marginTop:10}}>{userData.givenName} {userData.displayName}</Text>
             <Text>{userData.email}</Text>
         </View>}
 
-        {!userData && <TouchableOpacity onPress={googleLogin} style={{marginHorizontal:50,marginVertical:0}}>
+        {!userData && <TouchableOpacity onPress={handleLogin} style={{marginHorizontal:50,marginTop:300}}>
             <View style={{flexDirection:'row',justifyContent:'center',alignItems:'center',borderWidth:1,borderRadius:10}}>
                 <Image style={{height:40,width:40,marginHorizontal:10,marginVertical:5}} source={require('../Assets/Images/google.png')} />
                 <Text style={{fontSize:20,fontWeight:'bold'}}>Signin with Google</Text>
@@ -53,6 +70,7 @@ const Login = () => {
                 <Text style={{fontSize:20,fontWeight:'bold'}}>Signout from Google</Text>
             </View>
         </TouchableOpacity>}
+        {loading && <ActivityIndicator size='large' />}
        
     </View>
   )
