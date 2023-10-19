@@ -1,5 +1,5 @@
 import React,{useEffect, useState} from 'react'
-import { ActivityIndicator, Image, Text, TouchableOpacity, View } from 'react-native'
+import { ActivityIndicator, Image, Text, TouchableOpacity, View,Modal } from 'react-native'
 import { GoogleSignin, statusCodes} from '@react-native-google-signin/google-signin';
 import auth from '@react-native-firebase/auth';
 
@@ -13,6 +13,8 @@ GoogleSignin.configure({
 const Login = () => {
     const [userData,setUserData]=useState(null)
     const [loading,setLoading]=useState(false)
+
+    const [status,setStatus]=useState(false)
 
     const googleLogin = async () => {
         const { idToken } = await GoogleSignin.signIn();
@@ -36,13 +38,20 @@ const Login = () => {
 
       const handleLogout=()=>{
         setLoading(true)
-        auth().signOut().then(()=>{
-            setUserData(null)
-            setLoading(false)
-        }).catch(error=>{
-            console.log(error)
-            setLoading(false)
-        })
+        setTimeout(()=>{
+            auth().signOut().then(()=>{
+                setUserData(null)
+                setLoading(false)
+            }).catch(error=>{
+                console.log(error)
+                setLoading(false)
+            })
+        },500)
+      }
+
+      const handleModal=()=>{
+        console.log("Hello modal")
+        setStatus(true)
       }
 
       useEffect(()=>{
@@ -50,9 +59,22 @@ const Login = () => {
       })
   return (
     <View>
+    <Modal visible={status} >
 
-        {userData && <View style={{justifyContent:'center',alignItems:'center',marginTop:110,marginBottom:30}}>
-            <Image style={{height:130,width:130,objectFit:'fill',borderRadius:50}} source={{uri:userData.photoURL}} />
+    </Modal>
+        {userData && <View style={{flexDirection:'row',backgroundColor:'#287FF0',width:'100%',height:'13%',justifyContent:'flex-end'}}>
+       <TouchableOpacity onPress={handleModal}>
+        <View style={{flexDirection:'column'}}>
+            <View style={{marginHorizontal:9,backgroundColor:'white',height:7,width:7,borderRadius:10,marginTop:10}} />
+            <View style={{marginHorizontal:9,backgroundColor:'white',height:7,width:7,borderRadius:10,marginTop:5}} />
+            <View style={{marginHorizontal:9,backgroundColor:'white',height:7,width:7,borderRadius:10,marginTop:5}} />
+
+        </View>
+        </TouchableOpacity>
+        </View>}
+
+        {userData && <View style={{justifyContent:'center',alignItems:'center',marginTop:80,marginBottom:30}}>
+            <Image style={{height:130,width:130,objectFit:'contain',borderRadius:50}} source={{uri:userData.photoURL}} />
             <Text style={{fontSize:20,fontWeight:'bold',marginTop:10}}>{userData.givenName} {userData.displayName}</Text>
             <Text>{userData.email}</Text>
         </View>}
